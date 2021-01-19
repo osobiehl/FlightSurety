@@ -23,8 +23,17 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+    bool private operational = true;
 
     address private contractOwner;          // Account used to deploy contract
+    //
+    
+
+    struct Airline{
+        bool isRegistered;
+        bool isFunded;
+        
+    }
 
     struct Flight {
         bool isRegistered;
@@ -32,7 +41,11 @@ contract FlightSuretyApp {
         uint256 updatedTimestamp;        
         address airline;
     }
+
+    mapping private (address => Airline) airlines;
+    uint private airlineCount;
     mapping(bytes32 => Flight) private flights;
+
 
  
     /********************************************************************************************/
@@ -50,7 +63,7 @@ contract FlightSuretyApp {
     modifier requireIsOperational() 
     {
          // Modify to call data contract's status
-        require(true, "Contract is currently not operational");  
+        require(operational, "Contract is currently not operational");  
         _;  // All modifiers require an "_" which indicates where the function body will be added
     }
 
@@ -62,6 +75,13 @@ contract FlightSuretyApp {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
+    modifier requireRegistered(){
+        requrie(airlines[msg.sender].isRegistered, "airline is not registered");
+        _;
+    }
+    modifier requireFunded(){
+        require(airlines[msg.sender].isFunded, "airline is not funded");
+    }
 
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
@@ -69,7 +89,7 @@ contract FlightSuretyApp {
 
     /**
     * @dev Contract constructor
-    *
+    * we assume the contractOwner is also an airline
     */
     constructor
                                 (
@@ -77,6 +97,10 @@ contract FlightSuretyApp {
                                 public 
     {
         contractOwner = msg.sender;
+        airlines[msg.sender] = Airline({
+            isRegistered: true;
+            isFunded: false;
+        })
     }
 
     /********************************************************************************************/
@@ -88,7 +112,7 @@ contract FlightSuretyApp {
                             pure 
                             returns(bool) 
     {
-        return true;  // Modify to call data contract's status
+        return operational;  // Modify to call data contract's status
     }
 
     /********************************************************************************************/
@@ -101,10 +125,10 @@ contract FlightSuretyApp {
     *
     */   
     function registerAirline
-                            (   
+                            (   address newAirline
                             )
                             external
-                            pure
+                            requireRegistered()
                             returns(bool success, uint256 votes)
     {
         return (success, 0);
