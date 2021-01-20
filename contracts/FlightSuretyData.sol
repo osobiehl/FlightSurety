@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -10,12 +10,51 @@ contract FlightSuretyData {
     /********************************************************************************************/
 
     address private contractOwner;                                      // Account used to deploy contract
-    bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+    bool private operational = true;         
+        struct Airline{
+        bool isRegistered;
+        bool isFunded;
+    }
+        struct Flight {
+        bool isRegistered;
+        uint8 statusCode;
+        uint256 updatedTimestamp;        
+        address airline;
+    }
+
+    struct Customer{
+        uint payment;
+        address customer;
+    }
+    
+    mapping (bytes32 => Customer[] ) insurances; 
+
+    mapping (address => Airline) private airlines;
+    uint private airlineCount;
+
+
+    mapping(bytes32 => Flight) private flights;
+
+    //currently not being used :) 
+    mapping (address => bool) private allowedContracts;
+
+    //credited accounts
+    uint private funds = 0;
+    mapping (address => uint) private creditedAccounts;
+
+
+
+                           // Blocks all state changes throughout the contract if false
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
-
+    event ImproperFunding(address, string);
+    event Funded(address);
+    event CustomerCredited(address);
+    event InsurancesPaid(address airline,
+                            string flight,
+                            uint256 timestamp);
 
     /**
     * @dev Constructor
@@ -27,6 +66,13 @@ contract FlightSuretyData {
                                 public 
     {
         contractOwner = msg.sender;
+        allowedContracts[msg.sender] = true;
+        airlines[msg.sender] = Airline({
+            isRegistered: true,
+            isFunded: false
+        });
+        airlineCount = 1;
+
     }
 
     /********************************************************************************************/
@@ -55,6 +101,14 @@ contract FlightSuretyData {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
+    modifier requireAuthorizedContract(){
+        require(allowedContracts[msg.sender]);
+        _;
+    }
+    modifier requireIsAirline(){
+        require(airlines[msg.sender].isRegistered == true);
+        _;
+    }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
@@ -70,9 +124,11 @@ contract FlightSuretyData {
                             view 
                             returns(bool) 
     {
-        return operational;
+        return operational; 
     }
-
+    function getAirlineCount()public view returns (uint){
+        return airlineCount;
+    }
 
     /**
     * @dev Sets contract operations on/off
@@ -89,6 +145,16 @@ contract FlightSuretyData {
         operational = mode;
     }
 
+    /**
+    @dev set allowed contracts
+
+    
+    
+     */
+     function setAllowedContracts(address newaddress) requireContractOwner external{
+         allowedContracts[msg.sender] = true;
+     } 
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -96,14 +162,25 @@ contract FlightSuretyData {
    /**
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
+    app logic will decide if a new airline can be added
     *
     */   
     function registerAirline
                             (   
+                                address newAirline
                             )
+                            requireIsAirline()
+                            requireAuthorizedContract()
                             external
-                            pure
+                        
     {
+        require(airlines[newAirline].isRegistered == false, "new airline is already registered");
+        airlines[newAirline] = Airline({
+            isRegistered: true,
+            isFunded: false
+        });
+       allowedContracts[newAirline] = true;
+       airlineCount++;
     }
 
 
@@ -112,11 +189,25 @@ contract FlightSuretyData {
     *
     */   
     function buy
-                            (                             
+                            (  
+                                       address airline,
+                            string  flight,
+                            uint256 timestamp,
+                            address customer    
                             )
                             external
                             payable
+                            requireAuthorizedContract()
     {
+        bytes32 key = getFlightKey(airline, flight, timestamp);
+        for (uint i = 0; i < insurances[key].length; i++){
+            require(insurances[key][i].customer != customer, "Customer has already bought insurance for this flight");
+        }
+        insurances[key].push( Customer({
+            customer: customer,
+            payment: msg.value
+        }));
+
 
     }
 
@@ -125,10 +216,31 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
+                                    address airline,
+                            string flight,
+                            uint256 timestamp
                                 )
+                                requireAuthorizedContract()
                                 external
-                                pure
+                                
     {
+        //TODO find out how to get flight information and register oracles
+        bytes32 key = getFlightKey(airline, flight, timestamp);
+        for (uint i = 0; i < insurances[key].length; i++){
+            Customer storage c = insurances[key][i];
+            creditedAccounts[c.customer] = c.payment.mul(3).div(2);
+            //rimportant to delete this . . .
+            c.payment = 0;
+            emit CustomerCredited(c.customer);
+            //to be extra safe and free up space . . .
+            delete insurances[key][i];
+        }
+        //log storage is cheaper so we're just going to store it there
+        emit InsurancesPaid( airline,
+                          flight,
+                         timestamp);
+        delete insurances[key];
+        
     }
     
 
@@ -140,8 +252,15 @@ contract FlightSuretyData {
                             (
                             )
                             external
-                            pure
-    {
+                            payable
+                            requireAuthorizedContract()
+    {   
+        require (creditedAccounts[msg.sender] > 0, "account has no funds to withdraw");
+        require(tx.origin == msg.sender, "only externally owned accounts may withdraw funds");
+        uint debted  = creditedAccounts[msg.sender];
+        creditedAccounts[msg.sender] = 0;
+        //solidity is not a well-designed language
+        msg.sender.transfer(debted);
     }
 
    /**
@@ -155,6 +274,16 @@ contract FlightSuretyData {
                             public
                             payable
     {
+     //   funds += msg.value;
+        require(msg.value > 10 ether, "insufficient funds, 10 ether is the minimum");
+        if (airlines[msg.sender].isRegistered && !airlines[msg.sender].isFunded){
+            airlines[msg.sender].isFunded = true;
+            emit Funded(msg.sender);
+        } 
+        else if (airlines[msg.sender].isRegistered == false)
+            emit ImproperFunding(msg.sender, "Airline is not registered");
+        else if (airlines[msg.sender].isFunded)
+            emit ImproperFunding(msg.sender, "Airline is already funded");
     }
 
     function getFlightKey

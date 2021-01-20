@@ -1,7 +1,7 @@
 
 var Test = require('../config/testConfig.js');
 //var BigNumber = require('bignumber.js');
-
+console.log ("starting . . . ");
 contract('Oracles', async (accounts) => {
 
   const TEST_ORACLES_COUNT = 20;
@@ -21,7 +21,7 @@ contract('Oracles', async (accounts) => {
 
 
   it('can register oracles', async () => {
-    
+
     // ARRANGE
     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
 
@@ -31,6 +31,7 @@ contract('Oracles', async (accounts) => {
       let result = await config.flightSuretyApp.getMyIndexes.call({from: accounts[a]});
       console.log(`Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`);
     }
+
   });
 
   it('can request flight status', async () => {

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 // It's important to avoid vulnerabilities due to numeric overflow bugs
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
@@ -15,7 +15,7 @@ contract FlightSuretyApp {
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
-
+    mapping (address => address[] ) consensusVotes;
     // Flight status codees
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
@@ -27,6 +27,7 @@ contract FlightSuretyApp {
 
     address private contractOwner;          // Account used to deploy contract
     //
+    DataInterface private data;
     
 
     struct Airline{
@@ -42,7 +43,7 @@ contract FlightSuretyApp {
         address airline;
     }
 
-    mapping private (address => Airline) airlines;
+    mapping (address => Airline) private airlines;
     uint private airlineCount;
     mapping(bytes32 => Flight) private flights;
 
@@ -76,11 +77,12 @@ contract FlightSuretyApp {
         _;
     }
     modifier requireRegistered(){
-        requrie(airlines[msg.sender].isRegistered, "airline is not registered");
+        require(airlines[msg.sender].isRegistered, "airline is not registered");
         _;
     }
     modifier requireFunded(){
         require(airlines[msg.sender].isFunded, "airline is not funded");
+        _;
     }
 
     /********************************************************************************************/
@@ -92,15 +94,16 @@ contract FlightSuretyApp {
     * we assume the contractOwner is also an airline
     */
     constructor
-                                (
+                                ( address dataAddress
                                 ) 
                                 public 
     {
         contractOwner = msg.sender;
         airlines[msg.sender] = Airline({
-            isRegistered: true;
-            isFunded: false;
-        })
+            isRegistered: true,
+            isFunded: false
+        });
+        data = DataInterface(dataAddress);
     }
 
     /********************************************************************************************/
@@ -109,10 +112,14 @@ contract FlightSuretyApp {
 
     function isOperational() 
                             public 
-                            pure 
+                            
                             returns(bool) 
     {
         return operational;  // Modify to call data contract's status
+    }
+
+    function airlineExists (address airlineAddress) public view returns (bool){
+        return (airlines[airlineAddress].isRegistered);
     }
 
     /********************************************************************************************/
@@ -130,8 +137,34 @@ contract FlightSuretyApp {
                             external
                             requireRegistered()
                             returns(bool success, uint256 votes)
+
     {
-        return (success, 0);
+        require (!data.airlineExists(newAirline));
+        uint airlineCount = data.getAirlineCount();
+        //case: less than 4 airlines are registered
+        if (airlineCount < 4 ){
+            data.registerAirline(newAirline);
+            success = true;
+            return(success, 0);
+        }
+        else{
+            uint i = 0;
+            for (i = 0; i < consensusVotes[newAirline].length; i++){
+                require(consensusVotes[newAirline][i] != msg.sender, "message sender has already voted for this airline");
+            }
+            consensusVotes[newAirline].push(msg.sender);
+            //case: we have enough votes
+            if (consensusVotes[newAirline].length > airlineCount / 2 ){
+                success = true;
+                data.registerAirline(newAirline);
+                return (success, consensusVotes[newAirline].length);
+            }
+            //case: we don't have enough votes
+            else {
+                success = false;
+                return(success, consensusVotes[newAirline].length);
+            }
+        }
     }
 
 
@@ -230,6 +263,8 @@ contract FlightSuretyApp {
     // they fetch data and submit a response
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
+    event OracleRegistered(address oracleaddress);
+
 
     // Register an oracle with the contract
     function registerOracle
@@ -247,6 +282,7 @@ contract FlightSuretyApp {
                                         isRegistered: true,
                                         indexes: indexes
                                     });
+        emit OracleRegistered(msg.sender);
     }
 
     function getMyIndexes
@@ -359,3 +395,16 @@ contract FlightSuretyApp {
 // endregion
 
 }   
+    /********************************************************************************************
+    *                                      DATA INTERFACE                                       *
+    *********************************************************************************************/
+    contract DataInterface{
+        function getAirlineCount() external returns (uint);
+        function airlineExists(address newAddress) public view returns (bool);
+        function setOperatingStatus(bool mode) external;
+        function setAllowedContracts(address newaddress) external;
+        function registerAirline(address newAirline) external;
+        function buy(address airline, string flight, uint256 timestamp, address customer) external payable;
+        function creditInsurees( address airline, string flight, uint256 timestamp) external;
+                    
+    }
