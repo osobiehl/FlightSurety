@@ -44,10 +44,10 @@ contract FlightSuretyApp {
     }
 
     mapping (address => Airline) private airlines;
-    uint private airlineCount;
     mapping(bytes32 => Flight) private flights;
 
 
+    event FlightRegistered(address airline, string flight, uint256 timestamp);
  
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -77,7 +77,7 @@ contract FlightSuretyApp {
         _;
     }
     modifier requireRegistered(){
-        require(airlines[msg.sender].isRegistered, "airline is not registered");
+        require(data.airlineIsRegistered(msg.sender) , "airline is not registered");
         _;
     }
     modifier requireFunded(){
@@ -136,10 +136,12 @@ contract FlightSuretyApp {
                             )
                             external
                             requireRegistered()
+                            requireContractOwner
+                                requireIsOperational
                             returns(bool success, uint256 votes)
 
     {
-        require (!data.airlineExists(newAirline));
+        require (!data.airlineIsRegistered(newAirline));
         uint airlineCount = data.getAirlineCount();
         //case: less than 4 airlines are registered
         if (airlineCount < 4 ){
@@ -174,11 +176,15 @@ contract FlightSuretyApp {
     */  
     function registerFlight
                                 (
+                                    address airline,
+                                    string flight,
+                                    uint256 timestamp
                                 )
                                 external
-                                pure
+                                requireContractOwner
+                                requireIsOperational
     {
-
+        data.registerFlight(airline, flight, timestamp);
     }
     
    /**
@@ -188,15 +194,31 @@ contract FlightSuretyApp {
     function processFlightStatus
                                 (
                                     address airline,
-                                    string memory flight,
+                                    string  flight,
                                     uint256 timestamp,
                                     uint8 statusCode
                                 )
-                                internal
-                                pure
+                                
+                                internal    
+                                requireContractOwner
+                                requireIsOperational                     
     {
+        data.processFlightStatus(airline, flight, timestamp, statusCode);
     }
-
+        function buy
+                            (  
+                                       address airline,
+                            string  flight,
+                            uint256 timestamp
+                                
+                            )
+                            external
+                            payable
+                            
+    {
+        require(msg.value <= 1 ether, "1 ether is the max supported value");
+        data.buy(airline, flight, timestamp, msg.sender);
+    }
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus
@@ -218,6 +240,7 @@ contract FlightSuretyApp {
 
         emit OracleRequest(index, airline, flight, timestamp);
     } 
+    
 
 
 // region ORACLE MANAGEMENT
@@ -400,11 +423,13 @@ contract FlightSuretyApp {
     *********************************************************************************************/
     contract DataInterface{
         function getAirlineCount() external returns (uint);
-        function airlineExists(address newAddress) public view returns (bool);
-        function setOperatingStatus(bool mode) external;
-        function setAllowedContracts(address newaddress) external;
-        function registerAirline(address newAirline) external;
-        function buy(address airline, string flight, uint256 timestamp, address customer) external payable;
+        function airlineIsRegistered( address newAddress) public view returns (bool);
+        function setOperatingStatus( bool mode) external;
+        function setAllowedContracts( address newaddress) external;
+        function registerAirline( address newAirline) external;
+        function buy( address airline, string flight, uint256 timestamp, address customer) external payable;
         function creditInsurees( address airline, string flight, uint256 timestamp) external;
-                    
+    
+        function registerFlight ( address airline, string flight, uint256 timestamp ) external;
+        function processFlightStatus(address airline, string flight, uint256 timestamp, uint8 statusCode);             
     }

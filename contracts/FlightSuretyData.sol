@@ -55,6 +55,15 @@ contract FlightSuretyData {
     event InsurancesPaid(address airline,
                             string flight,
                             uint256 timestamp);
+    event FlightRegistered(address airline,
+                                    string flight,
+                                    uint256 timestamp);
+    
+    event FlightProcessed(address airline,
+                                    string flight,
+                                    uint256 timestamp,
+                                    uint8 statusCode);
+    event Insured(address customer, uint256 value);
 
     /**
     * @dev Constructor
@@ -109,6 +118,14 @@ contract FlightSuretyData {
         require(airlines[msg.sender].isRegistered == true);
         _;
     }
+    modifier requireIsFunded(address airline){
+        require(airlines[airline].isFunded == true);
+        _;
+    }
+        modifier requireIsAirlineAddress(address a){
+        require(airlines[a].isRegistered == true);
+        _;
+    }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
@@ -153,7 +170,12 @@ contract FlightSuretyData {
      */
      function setAllowedContracts(address newaddress) requireContractOwner external{
          allowedContracts[msg.sender] = true;
+
      } 
+
+     function airlineIsRegistered (address newAddress) requireAuthorizedContract() public view  returns (bool){
+         return airlines[newAddress].isRegistered;
+     }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -183,6 +205,53 @@ contract FlightSuretyData {
        airlineCount++;
     }
 
+        function registerFlight
+                                (
+                                    address airline,
+                                    string flight,
+                                    uint256 timestamp
+                                )
+                                external
+                                requireIsAirlineAddress(airline)
+                                requireIsOperational
+                                requireAuthorizedContract
+                                requireIsFunded(airline)
+    {                       
+        bytes32 key = getFlightKey(airline, flight, timestamp);
+        require(flights[key].isRegistered != true, "flight is already registered");
+        flights[key] = Flight({
+            isRegistered: true,
+            statusCode: 0,
+            updatedTimestamp: timestamp,
+            airline: airline
+        });
+        emit FlightRegistered(airline, flight, timestamp);
+
+    }
+    function processFlightStatus
+                                (
+                                    address airline,
+                                    string  flight,
+                                    uint256 timestamp,
+                                    uint8 statusCode
+                                )
+                                external
+                                requireIsAirlineAddress(airline)
+                                requireIsOperational
+                                requireAuthorizedContract
+                                requireIsFunded(airline)                        
+    {
+        bytes32 key = getFlightKey(airline, flight, timestamp);
+        require(flights[key].isRegistered == true, "flight is not registered");
+        flights[key] = Flight({
+            isRegistered: true,
+            statusCode: statusCode,
+            updatedTimestamp: timestamp,
+            airline: airline
+        });
+        emit FlightProcessed(airline, flight, timestamp, statusCode);
+
+    }
 
    /**
     * @dev Buy insurance for a flight
@@ -207,8 +276,7 @@ contract FlightSuretyData {
             customer: customer,
             payment: msg.value
         }));
-
-
+        emit Insured(customer, msg.value);
     }
 
     /**
@@ -228,7 +296,7 @@ contract FlightSuretyData {
         bytes32 key = getFlightKey(airline, flight, timestamp);
         for (uint i = 0; i < insurances[key].length; i++){
             Customer storage c = insurances[key][i];
-            creditedAccounts[c.customer] = c.payment.mul(3).div(2);
+            creditedAccounts[c.customer] += c.payment.mul(3).div(2);
             //rimportant to delete this . . .
             c.payment = 0;
             emit CustomerCredited(c.customer);
