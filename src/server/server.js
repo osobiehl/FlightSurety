@@ -9,8 +9,14 @@ const DEBUG = true;
 let config = Config['localhost'];
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 web3.eth.defaultAccount = web3.eth.accounts[0];
-let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-let flightSuretyData = new web3.eth.contract(FlightSuretyData.abi, config.dataAddress)
+let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
+console.log(flightSuretyData._address);
+let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress).deploy({
+  data: FlightSuretyApp.bytecode,
+  arguments: [flightSuretyData.address]
+});
+console.log(flightSuretyApp);
+
 
 const ORACLE_FEE = Web3.utils.toWei( '1', "ether");
 const ORACLE_COUNT = 20;
