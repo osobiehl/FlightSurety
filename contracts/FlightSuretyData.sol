@@ -168,13 +168,21 @@ contract FlightSuretyData {
     
     
      */
-     function setAllowedContracts(address newaddress) requireContractOwner external{
-         allowedContracts[msg.sender] = true;
+     function authorizeCaller(address newaddress) requireContractOwner external{
+         allowedContracts[newaddress] = true;
 
      } 
 
      function airlineIsRegistered (address newAddress) requireAuthorizedContract() public view  returns (bool){
          return airlines[newAddress].isRegistered;
+     }
+     //same thing xd
+     function isAirline (address newAddress) requireAuthorizedContract() public view  returns (bool){
+         return airlines[newAddress].isRegistered;
+     }
+
+     function airlineIsFunded(address newAddress) requireAuthorizedContract() public view returns (bool){
+         return airlines[newAddress].isRegistered && airlines[newAddress].isFunded;
      }
 
     /********************************************************************************************/

@@ -57,7 +57,7 @@ function generateStatusCode(){
 }
 
 
-
+console.log(flightSuretyApp.events);
 flightSuretyApp.events.OracleRequest({
     fromBlock: 0
   }, function (error, event) {
@@ -88,7 +88,8 @@ flightSuretyApp.events.OracleRequest({
     
 });
 
-flightSuretyApp.events.OracleReport({
+console.log(FlightSuretyApp.events);
+FlightSuretyApp.events.OracleReport({
   fromBlock: 0,
 }, (error, response) => {
   if (error){

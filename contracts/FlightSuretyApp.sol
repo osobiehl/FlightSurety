@@ -98,6 +98,7 @@ contract FlightSuretyApp {
                                 ) 
                                 public 
     {
+        operational = true;
         contractOwner = msg.sender;
         airlines[msg.sender] = Airline({
             isRegistered: true,
@@ -112,7 +113,7 @@ contract FlightSuretyApp {
 
     function isOperational() 
                             public 
-                            
+                            view
                             returns(bool) 
     {
         return operational;  // Modify to call data contract's status
@@ -424,6 +425,7 @@ contract FlightSuretyApp {
     contract DataInterface{
         function getAirlineCount() external returns (uint);
         function airlineIsRegistered( address newAddress) public view returns (bool);
+        function airlineIsFunded(address newAddress) public view returns (bool);
         function setOperatingStatus( bool mode) external;
         function setAllowedContracts( address newaddress) external;
         function registerAirline( address newAirline) external;
@@ -431,5 +433,5 @@ contract FlightSuretyApp {
         function creditInsurees( address airline, string flight, uint256 timestamp) external;
     
         function registerFlight ( address airline, string flight, uint256 timestamp ) external;
-        function processFlightStatus(address airline, string flight, uint256 timestamp, uint8 statusCode);             
+        function processFlightStatus(address airline, string flight, uint256 timestamp, uint8 statusCode) external;             
     }

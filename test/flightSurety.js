@@ -16,8 +16,10 @@ contract('Flight Surety Tests', async (accounts) => {
 
   it(`(multiparty) has correct initial isOperational() value`, async function () {
 
+
     // Get operating status
     let status = await config.flightSuretyData.isOperational.call();
+    console.log(status);
     assert.equal(status, true, "Incorrect initial operating status value");
 
   });
@@ -84,7 +86,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     }
     let result = await config.flightSuretyData.isAirline.call(newAirline); 
-
+    console.log(result);
     // ASSERT
     assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
 
