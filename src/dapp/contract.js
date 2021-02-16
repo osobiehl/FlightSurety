@@ -1,6 +1,6 @@
-import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
-import Config from './config.json';
-import Web3 from 'web3';
+import {default as FlightSuretyApp} from '../../build/contracts/FlightSuretyApp.json';
+import {default as Config} from './config.json';
+var Web3 = require('web3');
 
 export default class Contract {
     constructor(network, callback) {
@@ -10,7 +10,8 @@ export default class Contract {
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         this.initialize(callback);
         this.owner = null;
-        this.airlines = [];
+        //example airline
+        this.airlines = ['0x627306090abaB3A6e1400e9345bC60c78a8BEf57'];
         this.passengers = [];
     }
 
@@ -42,6 +43,7 @@ export default class Contract {
 
     fetchFlightStatus(flight, callback) {
         let self = this;
+        console.log("fetchFlightStatus");
         let payload = {
             airline: self.airlines[0],
             flight: flight,
@@ -53,4 +55,5 @@ export default class Contract {
                 callback(error, payload);
             });
     }
+
 }

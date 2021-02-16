@@ -4,6 +4,7 @@ import Config from './config.json';
 import Web3 from 'web3';
 import express from 'express';
 
+
 const DEBUG = true;
 const ORACLE_FEE = Web3.utils.toWei( '1', "ether");
 const ORACLE_COUNT = 20;
@@ -15,6 +16,11 @@ let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('htt
 web3.eth.getAccounts().then( (javascriptISFUCKINGTRASH) => {
   web3.eth.defaultAccount = javascriptISFUCKINGTRASH[0]
   var accounts = javascriptISFUCKINGTRASH;
+  if(DEBUG)
+  {
+    console.log("LOGGING ACCOUNTS: ");
+    console.log(accounts);
+  }
 
   let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
   //  web3.eth.getBalance(flightSuretyData.options.address, function(error, result){
@@ -27,19 +33,27 @@ web3.eth.getAccounts().then( (javascriptISFUCKINGTRASH) => {
       
   //  });
    console.log("by here had error");
-  //  web3.eth.sendTransaction({to: flightSuretyData.options.address, from: accounts[0], value: web3.toWei("1", "ether")} , (error, result) =>{
-  //    if (error) console.log(error);
-  //  }).catch((err) => {console.log(error)});
-  let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
 
+
+ let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+  // web3.eth.sendTransaction({to: flightSuretyData.options.address, from: accounts[0], value: web3.utils.toWei("25", "ether")} , (error, result) =>{
+  //   if (error) console.log(error);
+  //   console.log("logging response: ");
+  //   console.log(result);
+  // });
   let oracles = [];
 
   for (let i=50 - ORACLE_COUNT; i < 50; i++){
     let oracle = accounts[i];
+    if (DEBUG)
+      web3.eth.getBalance(oracle, (err, resp) => {
+        console.log("oracle: "+i+": balance: "+resp);
+        if (err) console.log(err);
+      })
     flightSuretyApp.methods.registerOracle().send({
       from: oracle, value: ORACLE_FEE, gas: GAS
     },  (error, response) =>
-    {
+    { 
       if (error)
         console.log(error);
       else{
@@ -93,9 +107,7 @@ flightSuretyApp.events.OracleRequest({
       });
     }
       
-  });
-  console.log(Object.keys)
-  
+  });  
   flightSuretyApp.events.OracleReport({
     fromBlock: 0,
   }, (error, response) => {

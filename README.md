@@ -17,6 +17,7 @@ To run truffle tests:
 
 `truffle test ./test/flightSurety.js`
 `truffle test ./test/oracles.js`
+do NOT try to run both tests at once, you will get a nonce error.
 
 To use the dapp:
 

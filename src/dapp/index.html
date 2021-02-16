@@ -7,6 +7,7 @@
     <title>FlightSurety</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="flightsurety.css" rel="stylesheet"> 
 </head>
 
 <body>
@@ -17,17 +18,36 @@
             aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-    </nav>
-
+    </nav><br>
     <main class="container">
-
         <div id="display-wrapper" class="top-20">
         </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-        </div>
+
     </main>
 
+
+
+    <div class="flight-select">
+
+        <select name="" id="select-flight" class="select">
+            <option value="" disabled selected>Select Flight</option>
+            <option value='0'>
+                 FS9999
+            </option>
+            <option value="1">
+                FS8888
+            </option>
+            <option value="2">
+                FS7777
+            </option>
+            <option value="3">
+                FS6666
+            </option>
+    
+    
+        </select>
+    </div>
+<button id="submit-oracle" class="btn">Submit to Oracles</button>
 </body>
 
 </html>

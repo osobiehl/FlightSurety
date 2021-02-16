@@ -1,6 +1,5 @@
-
-import DOM from './dom';
-import Contract from './contract';
+import DOM from './dom.js';
+import Contract from './contract.js';
 import './flightsurety.css';
 
 
@@ -19,13 +18,13 @@ import './flightsurety.css';
 
         // User-submitted transaction
         DOM.elid('submit-oracle').addEventListener('click', () => {
-            let flight = DOM.elid('flight-number').value;
+            let flight = DOM.elid('select-flight');
+            let actualFlight = console.log(flight.options[flight.selectedIndex].text);
             // Write transaction
-            contract.fetchFlightStatus(flight, (error, result) => {
+            contract.fetchFlightStatus(actualFlight, (error, result) => {
                 display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
             });
-        })
-    
+        }) 
     });
     
 
@@ -44,12 +43,5 @@ function display(title, description, results) {
         section.appendChild(row);
     })
     displayDiv.append(section);
-
+    
 }
-
-
-
-
-
-
-
