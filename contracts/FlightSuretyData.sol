@@ -135,19 +135,21 @@ contract FlightSuretyData {
         emit OperationalStatus(mode);
     }
 
-    function isCallerRegistered(address contractAddress)
+    function isRegistered(address airlineAddress)
         external
         view
         returns (bool)
     {
-        return authorizedCallers[contractAddress];
+        return airlines[airlineAddress].registered;
     }
 
 
     function authorizeCaller(address contractAddress)
         external
         requireContractOwner
+
     {
+        require(authorizedCallers[contractAddress] == false, "contract is already authorized");
         authorizedCallers[contractAddress] = true;
         emit CallerAuthorized(contractAddress);
     }
@@ -417,7 +419,7 @@ contract FlightSuretyData {
         external
         requireIsOperational
         requireCallerAuthorized
-        returns (bool complete)
+        returns (bool)
     {
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         require(flights[flightKey].exists == true, "Flight does not exist");
@@ -426,8 +428,7 @@ contract FlightSuretyData {
             "Flight has already been processed"
         );
         flights[flightKey].statusCode = statusCode;
-        complete = true;
-        return complete;
+        return true;
     }
 
     /**

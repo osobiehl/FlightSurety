@@ -84,6 +84,12 @@ contract FlightSuretyApp {
     function isOperational() public view returns (bool) {
         return operational; // Modify to call data contract's status
     }
+    function isFunded(address airlineAddress) external view returns (bool){
+        return data.isFunded(airlineAddress);
+    }
+    function isRegistered(address airlineAddress) external view returns (bool){
+        return data.isRegistered(airlineAddress); 
+    }
 
     /**
      * @dev Sets contract operations on/off
@@ -113,7 +119,7 @@ contract FlightSuretyApp {
         (bool succeeded, uint votes)
     {
         uint nr = data.getAirlineCount();
-        if (nr <= 4){
+        if (nr < 4){
             data.registerAirline(airlineAddress);
             succeeded = false;
             votes = 0;
