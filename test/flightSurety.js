@@ -25,32 +25,32 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it(`(multiparty) can block access to setOperatingStatus() for non-Contract Owner account`, async function () {
     // Ensure that access is denied for non-Contract Owner account
-    let accessDenied = false;
+    let reverted = false;
     try {
       await config.flightSuretyData.setOperatingStatus(false, {
         from: config.testAddresses[2],
       });
     } catch (e) {
-      accessDenied = true;
+      reverted = true;
     }
-    assert.equal(accessDenied, true, "Access not restricted to Contract Owner");
+    assert.equal(reverted, true, "Access not restricted to Contract Owner");
   });
 
   it(`(multiparty) can allow access to setOperatingStatus() for Contract Owner account`, async function () {
     // Ensure that access is allowed for Contract Owner account
-    let accessDenied = false;
+    let reverted = false;
     try {
       await config.flightSuretyData.setOperatingStatus(false);
     } catch (e) {
-      accessDenied = true;
+      reverted = true;
     }
     assert.equal(
-      accessDenied,
+      reverted,
       false,
       "Access not restricted to Contract Owner"
     );
 
-    // Set it back for other tests to work
+    // Set it so other tests work
     await config.flightSuretyData.setOperatingStatus(true);
   });
 
@@ -62,9 +62,12 @@ contract("Flight Surety Tests", async (accounts) => {
 
     let reverted = false;
     try {
+
       await config.flightSuretyData.getAirline(config.firstAirline);
     } catch (e) {
+
       reverted = true;
+
     }
     assert.equal(reverted, true, "Access not blocked for requireIsOperational");
 
@@ -75,14 +78,13 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("(airline) cannot register an Airline using registerAirline() if it is not funded", async () => {
     // ARRANGE
-    let newAirline = accounts[2];
 
+    let newAirline = accounts[2];
     let reverted = false;
     // ACT
     try {
       await config.flightSuretyApp.registerAirline(
         newAirline,
-        "Test Airline 2",
         {
           from: config.firstAirline,
         }
@@ -113,6 +115,7 @@ contract("Flight Surety Tests", async (accounts) => {
         newAirline,
         {
           from: config.firstAirline,
+          //nonce doesn't want to sync up after an error
           nonce: await Web3.eth.getTransactionCount(config.firstAirline),
         }
       );
@@ -154,12 +157,7 @@ contract("Flight Surety Tests", async (accounts) => {
         from: config.firstAirline,
       }
     );
-    await config.flightSuretyApp.registerAirline(
-      accounts[6],
-      {
-        from: config.firstAirline,
-      }
-    );
+
     const fifthAirline = await config.flightSuretyApp.isRegistered.call(
       accounts[5],
       {from: config.firstAirline}
@@ -172,7 +170,7 @@ contract("Flight Surety Tests", async (accounts) => {
       "The 5th airline registered should require multi-party consensus"
     );
 
-    // Fund and vote
+// parity voting should've started, if not we get a revert, now we fund and vote
     await config.flightSuretyApp.fund(accounts[2], {
       from: accounts[2],
       value: web3.utils.toWei("10", "ether"),
@@ -214,7 +212,7 @@ contract("Flight Surety Tests", async (accounts) => {
     try {
       await config.flightSuretyApp.registerFlight(
         "1332",
-        "OAK -> HOU",
+        "SJO -> PTY",
         1587423057711,
         {
           from: accounts[4],

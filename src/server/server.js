@@ -16,13 +16,12 @@ let flightSuretyApp = new web3.eth.Contract(
 const ORACLE_FEE = Web3.utils.toWei("1", "ether");
 const TEST_ORACLES_COUNT = 20;
 const GAS = 3000000;
-
-let memoryOracles = Array();
+let oracles = [];
 
 web3.eth.getAccounts().then((accounts) => {
   // register 20 oracles
   for (let i = 0; i < TEST_ORACLES_COUNT; i++) {
-    let oracle = accounts[30 + i];
+    let oracle = accounts[29+ i];
     flightSuretyApp.methods
       .registerOracle()
       .send(
@@ -31,15 +30,15 @@ web3.eth.getAccounts().then((accounts) => {
           if (error) {
             console.log(error);
           } else {
-            console.log("Added oracle #" + (i + 1), " ", oracle);
-            memoryOracles.push({ oracle });
+            console.log("oracle " + (i + 1), " added: ", oracle);
+            oracles.push({ oracle });
 
             // fetch indices
 
             flightSuretyApp.methods
               .getMyIndexes()
               .call({ from: oracle, gas: GAS }, (error, response) => {
-                memoryOracles[i].indices = response;
+                oracles[i].indices = response;
               });
           }
         }
@@ -80,7 +79,7 @@ flightSuretyApp.events.OracleRequest(
       let statusCode = statuscodes[ Math.floor(Math.random() * statuscodes.length)];
       //console.log("STATUSCODE:======================\n\n\n\n\n\n\ "+ statusCode);
       let count = 0;
-      memoryOracles.forEach((oracle, i) => {
+      oracles.forEach((oracle, i) => {
         if (oracle.indices.includes(oracleIndex)) {
           flightSuretyApp.methods
             .submitOracleResponse(

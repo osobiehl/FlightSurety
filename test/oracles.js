@@ -19,15 +19,14 @@ contract("Oracles", async (accounts) => {
   it("can register oracles", async () => {
     // ARRANGE
     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
-
     // ACT
-    for (let a = 1; a < TEST_ORACLES_COUNT; a++) {
+    for (let idx = 1; idx < TEST_ORACLES_COUNT; idx++) {
       await config.flightSuretyApp.registerOracle({
-        from: accounts[a],
+        from: accounts[idx],
         value: fee,
       });
       let result = await config.flightSuretyApp.getMyIndexes.call({
-        from: accounts[a],
+        from: accounts[idx],
       });
       console.log(
         `Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`
@@ -37,7 +36,7 @@ contract("Oracles", async (accounts) => {
 
   it("can request flight status", async () => {
     // ARRANGE
-    let flight = "FS1111"; // Course number
+    let flight = "FS1111"; // flight nr
     let timestamp = Math.floor(Date.now() / 1000);
 
     // Submit a request for oracles to get status information for a flight
