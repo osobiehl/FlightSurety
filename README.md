@@ -1,6 +1,6 @@
 # FlightSurety
 
-This thing was a pain to make and debug, I hope everything works because I never want to mess with it again.
+This thing was a pain to make and debug, I hope everything works because I never want to mess with it again. I was heavily inspired by looking at actually functioning code and crying because my smart contract states weren't changing. Life just sucks I guess
 
 ## Install
 
