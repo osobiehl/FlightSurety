@@ -86,7 +86,7 @@ import "./flightsurety.css";
           {
             label: "Passenger withdrew funds",
             error: error,
-            value: result.flight + " " + result.timestamp,
+            //value: result.flight + " " + result.timestamp,
           },
         ]);
       });

@@ -160,7 +160,8 @@ contract FlightSuretyApp {
      * @dev Called after oracle has updated flight status
      *
      */
-
+    event CreditInsureesDev(address, string, uint256, uint8);
+    event NotCreditedDev(address, string, uint256, uint8);
     function processFlightStatus(
         address airline,
         string memory flight,
@@ -183,12 +184,16 @@ contract FlightSuretyApp {
             payout = true;
         }
         if (complete == true && payout == true) {
+            emit CreditInsureesDev(airline, flight, timestamp, statusCode);
             data.creditInsurees(
                 airline,
                 flight,
                 timestamp,
                 INSURANCE_PAYOUT_DIVIDEND
             );
+        }
+        else {
+            emit  NotCreditedDev(airline, flight, timestamp, statusCode);
         }
     }
 

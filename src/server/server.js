@@ -47,6 +47,22 @@ web3.eth.getAccounts().then((accounts) => {
   }
 });
 
+flightSuretyApp.events.NotCreditedDev(
+  {fromBlock: 0},
+  function(error, event){
+    console.log ("NOT CREDITED!\n==================\n");
+    console.log(event);
+  }
+);
+
+flightSuretyApp.events.CreditInsureesDev(
+  {fromBlock: 0},
+  function(error, event){
+    console.log ("CREDITED!\n==================\n");
+    console.log(event);
+  }
+);
+
 flightSuretyApp.events.OracleRequest(
   {
     fromBlock: 0,
@@ -61,7 +77,8 @@ flightSuretyApp.events.OracleRequest(
 
       // generate a status code
       let statuscodes = [0, 10, 20, 30, 40, 50];
-      let statusCode = statuscodes[Math.floor(Math.random()) % statuscodes.length];
+      let statusCode = statuscodes[ Math.floor(Math.random() * statuscodes.length)];
+      //console.log("STATUSCODE:======================\n\n\n\n\n\n\ "+ statusCode);
       let count = 0;
       memoryOracles.forEach((oracle, i) => {
         if (oracle.indices.includes(oracleIndex)) {

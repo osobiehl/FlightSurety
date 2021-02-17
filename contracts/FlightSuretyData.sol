@@ -352,7 +352,7 @@ contract FlightSuretyData {
         );
         require(insureeFunds[insuree] > 0, "No funds available to withdraw");
         uint256 _amount = insureeFunds[insuree];
-        insureeFunds[insuree] = insureeFunds[insuree].sub(_amount);
+        insureeFunds[insuree] = 0;
         return _amount;
     }
 

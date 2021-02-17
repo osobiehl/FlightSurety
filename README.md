@@ -1,6 +1,6 @@
 # FlightSurety
 
-FlightSurety is a sample application project for Udacity's Blockchain course.
+This thing was a pain to make and debug, I hope everything works because I never want to mess with it again.
 
 ## Install
 
@@ -18,6 +18,8 @@ To run truffle tests:
 `truffle test ./test/flightSurety.js`
 `truffle test ./test/oracles.js`
 do NOT try to run both tests at once, you will get a nonce error.
+The tests verify that a new airline can only be registered using consensus after 4 airlines have been already registered, also that an airline cannot participate in the contract until submitting 10 ether
+
 
 To use the dapp:
 
